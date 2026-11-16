@@ -1,12 +1,12 @@
+
 services:
 
+  # Eureka Server
   eureka-server:
     image: eureka-server:v1
     container_name: eureka-server
-
     ports:
       - "${EUREKA_PORT}:8761"
-
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_APPLICATION_NAME: eureka-server
@@ -16,19 +16,66 @@ services:
       EUREKA_SELF_PRESERVATION: true
       EUREKA_LOG_LEVEL: INFO
       DISCOVERY_LOG_LEVEL: INFO
-
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
-
     networks:
       - ecommerce-network
 
+
+  # Identity MySQL
+  identity-mysql:
+    image: mysql:8.4
+    container_name: identity-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${IDENTITY_DATABASE}
+      MYSQL_USER: ${IDENTITY_USER}
+      MYSQL_PASSWORD: ${IDENTITY_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${IDENTITY_ROOT_PASSWORD}
+    ports:
+      - "${IDENTITY_MYSQL_HOST_PORT}:3306"
+    volumes:
+      - identity-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${IDENTITY_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # Identity Microservice
+  identity-service:
+    image: identity-microservice:v1
+    container_name: identity-service
+    restart: unless-stopped
+    ports:
+      - "${IDENTITY_SERVICE_HOST_PORT}:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      IDENTITY_DATABASE: ${IDENTITY_DATABASE}
+      IDENTITY_USER: ${IDENTITY_USER}
+      IDENTITY_PASSWORD: ${IDENTITY_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      identity-mysql:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
 
 
 networks:
   ecommerce-network:
     driver: bridge
+
+
+volumes:
+  identity-mysql-data:

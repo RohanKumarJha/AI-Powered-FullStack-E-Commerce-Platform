@@ -1,11 +1,9 @@
 server:
-  port: 8081
+  port: ${IDENTITY_SERVICE_HOST_PORT:8081}
 
 spring:
   application:
     name: Identity-Microservice
-  profiles:
-    default: local
 
 management:
   endpoints:
