@@ -1,0 +1,13 @@
+
+eureka:
+  client:
+    register-with-eureka: ${EUREKA_REGISTER_WITH_EUREKA:false}
+    fetch-registry: ${EUREKA_FETCH_REGISTRY:false}
+
+  server:
+    enable-self-preservation: ${EUREKA_SELF_PRESERVATION:true}
+
+logging:
+  level:
+    com.netflix.eureka: ${EUREKA_LOG_LEVEL:INFO}
+    com.netflix.discovery: ${DISCOVERY_LOG_LEVEL:INFO}
