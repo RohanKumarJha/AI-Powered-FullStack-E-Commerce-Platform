@@ -2,10 +2,12 @@ package com.ecommerce.service.impl;
 
 import com.ecommerce.dto.request.AddressRequest;
 import com.ecommerce.dto.response.AddressResponse;
+import com.ecommerce.exception.AccessDeniedException;
 import com.ecommerce.mapper.AddressMapper;
 import com.ecommerce.model.Address;
 import com.ecommerce.model.User;
 import com.ecommerce.repository.AddressRepository;
+import com.ecommerce.security.UserContext;
 import com.ecommerce.service.AddressService;
 import com.ecommerce.service.factory.AddressFactory;
 import com.ecommerce.service.factory.UserFactory;
@@ -33,11 +35,11 @@ public class AddressServiceImpl implements AddressService {
             Long userId,
             AddressRequest request) {
         User user = userFactory.getUserById(userId);
-//        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
-//            throw new AccessDeniedException(
-//                    "You are not authorized to add an address for this user"
-//            );
-//        }
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to add an address for this user"
+            );
+        }
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             unsetDefaultAddress(userId);
         }
@@ -58,11 +60,11 @@ public class AddressServiceImpl implements AddressService {
             AddressRequest request) {
         Address address = addressFactory.getAddressById(addressId);
         String addressIdOwnerEmail = address.getUser().getEmail();
-//        if(!addressIdOwnerEmail.equals(UserContext.getCurrentUserEmail())) {
-//            throw new AccessDeniedException(
-//                    "You are not authorized to update this address"
-//            );
-//        }
+        if(!addressIdOwnerEmail.equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to update this address"
+            );
+        }
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             unsetDefaultAddress(address.getUser().getUserId(), addressId);
         }
@@ -80,11 +82,11 @@ public class AddressServiceImpl implements AddressService {
     public void deleteAddress(Long addressId) {
         Address address = addressFactory.getAddressById(addressId);
         String addressIdOwnerEmail = address.getUser().getEmail();
-//        if(!addressIdOwnerEmail.equals(UserContext.getCurrentUserEmail())) {
-//            throw new AccessDeniedException(
-//                    "You are not authorized to delete this address"
-//            );
-//        }
+        if(!addressIdOwnerEmail.equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to delete this address"
+            );
+        }
         addressRepository.delete(address);
         log.info(
                 "Deleted address successfully with addressId : {}",
@@ -96,11 +98,11 @@ public class AddressServiceImpl implements AddressService {
     public AddressResponse getAddressById(Long addressId) {
         Address address = addressFactory.getAddressById(addressId);
         String addressIdOwnerEmail = address.getUser().getEmail();
-//        if(!addressIdOwnerEmail.equals(UserContext.getCurrentUserEmail())) {
-//            throw new AccessDeniedException(
-//                    "You are not authorized to access this address"
-//            );
-//        }
+        if(!addressIdOwnerEmail.equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to access this address"
+            );
+        }
         log.info(
                 "Get address successfully with addressId : {}",
                 addressId
@@ -111,11 +113,11 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public List<AddressResponse> getUserAddresses(Long userId) {
         User user = userFactory.getUserById(userId);
-//        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
-//            throw new AccessDeniedException(
-//                    "You are not authorized to access address for this user"
-//            );
-//        }
+        if(!user.getEmail().equals(UserContext.getCurrentUserEmail())) {
+            throw new AccessDeniedException(
+                    "You are not authorized to access address for this user"
+            );
+        }
         List<AddressResponse> addressResponses =
                 addressRepository.findByUser(user)
                         .stream()
