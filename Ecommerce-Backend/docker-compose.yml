@@ -168,6 +168,54 @@ services:
       - ecommerce-network
 
 
+  # ==============================
+  # Redis Database
+  # ==============================
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_HOST_PORT}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Cart Service
+  # ==============================
+  cart-service:
+    image: cart-microservice:v1
+    container_name: cart-service
+    restart: unless-stopped
+    ports:
+      - "${CART_SERVICE_HOST_PORT}:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: cart-service
+      SERVER_PORT: 8084
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
+
+
 # ==============================
 # Docker Network
 # ==============================
@@ -183,3 +231,4 @@ volumes:
   identity-mysql-data:
   catalog-mongodb-data:
   inventory-postgres-data:
+  redis-data:

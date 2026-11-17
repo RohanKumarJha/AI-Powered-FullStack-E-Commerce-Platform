@@ -1,0 +1,16 @@
+
+server:
+  port: ${CART_SERVICE_HOST_PORT:8084}
+
+spring:
+  application:
+    name: Cart-Microservice
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
