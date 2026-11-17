@@ -6,6 +6,7 @@
     <file url="file://$PROJECT_DIR$/Eureka-Server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Identity-Microservice/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Inventory-Microservice/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Notification-Microservice/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Order-Microservice/src/main/java" charset="UTF-8" />
   </component>
 </project>

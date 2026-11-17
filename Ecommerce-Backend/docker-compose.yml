@@ -266,6 +266,57 @@ services:
       - ecommerce-network
 
 
+  # ==============================
+  # Notification PostgreSQL Database
+  # ==============================
+  notification-postgres:
+    image: postgres:17
+    container_name: notification-postgres
+    restart: unless-stopped
+    ports:
+      - "${NOTIFICATION_POSTGRES_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${NOTIFICATION_DATABASE}
+      POSTGRES_USER: ${NOTIFICATION_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_PASSWORD}
+    volumes:
+      - notification-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Notification Service
+  # ==============================
+  notification-service:
+    image: notification-microservice:v1
+    container_name: notification-service
+    restart: unless-stopped
+    ports:
+      - "${NOTIFICATION_SERVICE_HOST_PORT}:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: notification-service
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-postgres:5432/${NOTIFICATION_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${NOTIFICATION_USER}
+      SPRING_DATASOURCE_PASSWORD: ${NOTIFICATION_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    depends_on:
+      notification-postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
+
 # ==============================
 # Docker Network
 # ==============================
@@ -283,3 +334,4 @@ volumes:
   inventory-postgres-data:
   redis-data:
   order-postgres-data:
+  notification-postgres-data:

@@ -9,13 +9,14 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Eureka-Server" />
       </profile>
-      <profile name="Annotation profile for Order-Microservice" enabled="true">
+      <profile name="Annotation profile for Notification-Microservice" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.48/lombok-1.18.48.jar" />
         </processorPath>
+        <module name="Notification-Microservice" />
         <module name="Catalog-Microservice" />
         <module name="Inventory-Microservice" />
         <module name="Order-Microservice" />
@@ -31,6 +32,7 @@
       <module name="Eureka-Server" options="-parameters" />
       <module name="Identity-Microservice" options="-parameters" />
       <module name="Inventory-Microservice" options="-parameters" />
+      <module name="Notification-Microservice" options="-parameters" />
       <module name="Order-Microservice" options="-parameters" />
     </option>
   </component>

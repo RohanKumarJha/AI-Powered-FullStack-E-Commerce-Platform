@@ -1,0 +1,18 @@
+
+server:
+  port: ${NOTIFICATION_SERVICE_HOST_PORT:8086}
+
+spring:
+  application:
+    name: Notification-Microservice
+  profiles:
+    active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

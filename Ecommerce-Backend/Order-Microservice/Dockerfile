@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY target/*.jar app.jar
+COPY target/Order-Microservice-0.0.1-SNAPSHOT.jarjar app.jar
 
 EXPOSE 8085
 
