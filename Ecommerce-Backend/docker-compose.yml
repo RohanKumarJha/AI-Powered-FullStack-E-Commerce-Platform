@@ -1,56 +1,51 @@
 
 services:
 
+  # ==============================
   # Eureka Server
+  # ==============================
   eureka-server:
     image: eureka-server:v1
     container_name: eureka-server
+    restart: unless-stopped
     ports:
       - "${EUREKA_PORT}:8761"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_APPLICATION_NAME: eureka-server
       SERVER_PORT: 8761
-      EUREKA_REGISTER_WITH_EUREKA: false
-      EUREKA_FETCH_REGISTRY: false
-      EUREKA_SELF_PRESERVATION: true
-      EUREKA_LOG_LEVEL: INFO
-      DISCOVERY_LOG_LEVEL: INFO
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
     networks:
       - ecommerce-network
 
 
-  # Identity MySQL
+  # ==============================
+  # Identity MySQL Database
+  # ==============================
   identity-mysql:
     image: mysql:8.4
     container_name: identity-mysql
     restart: unless-stopped
+    ports:
+      - "${IDENTITY_MYSQL_HOST_PORT}:3306"
     environment:
       MYSQL_DATABASE: ${IDENTITY_DATABASE}
       MYSQL_USER: ${IDENTITY_USER}
       MYSQL_PASSWORD: ${IDENTITY_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${IDENTITY_ROOT_PASSWORD}
-    ports:
-      - "${IDENTITY_MYSQL_HOST_PORT}:3306"
     volumes:
       - identity-mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${IDENTITY_ROOT_PASSWORD}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 20s
+      start_period: 30s
     networks:
       - ecommerce-network
 
 
-  # Identity Microservice
+  # ==============================
+  # Identity Service
+  # ==============================
   identity-service:
     image: identity-microservice:v1
     container_name: identity-service
@@ -59,24 +54,83 @@ services:
       - "${IDENTITY_SERVICE_HOST_PORT}:8081"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      JWT_SECRET: ${JWT_SECRET}
-      IDENTITY_DATABASE: ${IDENTITY_DATABASE}
-      IDENTITY_USER: ${IDENTITY_USER}
-      IDENTITY_PASSWORD: ${IDENTITY_PASSWORD}
+      SPRING_APPLICATION_NAME: identity-service
+      SERVER_PORT: 8081
+
+      SPRING_DATASOURCE_URL: jdbc:mysql://identity-mysql:3306/${IDENTITY_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${IDENTITY_USER}
+      SPRING_DATASOURCE_PASSWORD: ${IDENTITY_PASSWORD}
+
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
-      eureka-server:
-        condition: service_healthy
       identity-mysql:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - ecommerce-network
 
 
+  # ==============================
+  # Catalog MongoDB
+  # ==============================
+  catalog-mongodb:
+    image: mongo:8.0
+    container_name: catalog-mongodb
+    restart: unless-stopped
+    ports:
+      - "${CATALOG_MONGO_PORT}:27017"
+    volumes:
+      - catalog-mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Catalog Service
+  # ==============================
+  catalog-service:
+    image: catalog-microservice:v1
+    container_name: catalog-service
+    restart: unless-stopped
+    ports:
+      - "${CATALOG_SERVICE_HOST_PORT}:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: catalog-service
+      SERVER_PORT: 8082
+
+      SPRING_DATA_MONGODB_URI: mongodb://${CATALOG_MONGO_HOST}:${CATALOG_MONGO_PORT}/${CATALOG_MONGO_DATABASE}
+
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    depends_on:
+      catalog-mongodb:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
+
+# ==============================
+# Docker Network
+# ==============================
 networks:
   ecommerce-network:
     driver: bridge
 
 
+# ==============================
+# Persistent Volumes
+# ==============================
 volumes:
   identity-mysql-data:
+  catalog-mongodb-data:

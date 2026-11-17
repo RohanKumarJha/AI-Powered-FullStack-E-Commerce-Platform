@@ -1,3 +1,4 @@
+
 server:
   port: ${IDENTITY_SERVICE_HOST_PORT:8081}
 
