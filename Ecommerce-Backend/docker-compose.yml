@@ -56,13 +56,10 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_APPLICATION_NAME: identity-service
       SERVER_PORT: 8081
-
       SPRING_DATASOURCE_URL: jdbc:mysql://identity-mysql:3306/${IDENTITY_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: ${IDENTITY_USER}
       SPRING_DATASOURCE_PASSWORD: ${IDENTITY_PASSWORD}
-
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
-
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       identity-mysql:
@@ -107,14 +104,63 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_APPLICATION_NAME: catalog-service
       SERVER_PORT: 8082
-
       SPRING_DATA_MONGODB_URI: mongodb://${CATALOG_MONGO_HOST}:${CATALOG_MONGO_PORT}/${CATALOG_MONGO_DATABASE}
-
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
-
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       catalog-mongodb:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Inventory PostgreSQL Database
+  # ==============================
+  inventory-postgres:
+    image: postgres:17
+    container_name: inventory-postgres
+    restart: unless-stopped
+    ports:
+      - "${INVENTORY_POSTGRES_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${INVENTORY_DATABASE}
+      POSTGRES_USER: ${INVENTORY_USER}
+      POSTGRES_PASSWORD: ${INVENTORY_PASSWORD}
+    volumes:
+      - inventory-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Inventory Service
+  # ==============================
+  inventory-service:
+    image: inventory-microservice:v1
+    container_name: inventory-service
+    restart: unless-stopped
+    ports:
+      - "${INVENTORY_SERVICE_HOST_PORT}:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: Inventory-Microservice
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-postgres:5432/${INVENTORY_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${INVENTORY_USER}
+      SPRING_DATASOURCE_PASSWORD: ${INVENTORY_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      inventory-postgres:
         condition: service_healthy
       eureka-server:
         condition: service_started
@@ -136,3 +182,4 @@ networks:
 volumes:
   identity-mysql-data:
   catalog-mongodb-data:
+  inventory-postgres-data:

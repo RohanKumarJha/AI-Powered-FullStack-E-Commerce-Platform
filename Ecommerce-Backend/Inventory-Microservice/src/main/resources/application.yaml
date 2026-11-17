@@ -1,0 +1,16 @@
+
+server:
+  port: ${Inventory_SERVICE_HOST_PORT:8083}
+
+spring:
+  application:
+    name: Inventory-Microservice
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
