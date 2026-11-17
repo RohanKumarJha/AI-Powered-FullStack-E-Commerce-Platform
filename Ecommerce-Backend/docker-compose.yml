@@ -78,7 +78,7 @@ services:
     container_name: catalog-mongodb
     restart: unless-stopped
     ports:
-      - "${CATALOG_MONGO_PORT}:27017"
+      - "${CATALOG_MONGO_HOST_PORT}:27017"
     volumes:
       - catalog-mongodb-data:/data/db
     healthcheck:
@@ -152,7 +152,7 @@ services:
       - "${INVENTORY_SERVICE_HOST_PORT}:8083"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_APPLICATION_NAME: Inventory-Microservice
+      SPRING_APPLICATION_NAME: inventory-service
       SERVER_PORT: 8083
       SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-postgres:5432/${INVENTORY_DATABASE}
       SPRING_DATASOURCE_USERNAME: ${INVENTORY_USER}
@@ -215,6 +215,56 @@ services:
       - ecommerce-network
 
 
+  # ==============================
+  # Order PostgreSQL Database
+  # ==============================
+  order-postgres:
+    image: postgres:17
+    container_name: order-postgres
+    restart: unless-stopped
+    ports:
+      - "${ORDER_POSTGRES_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${ORDER_DATABASE}
+      POSTGRES_USER: ${ORDER_USER}
+      POSTGRES_PASSWORD: ${ORDER_PASSWORD}
+    volumes:
+      - order-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Order Service
+  # ==============================
+  order-service:
+    image: order-microservice:v1
+    container_name: order-service
+    restart: unless-stopped
+    ports:
+      - "${ORDER_SERVICE_HOST_PORT}:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: order-service
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-postgres:5432/${ORDER_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${ORDER_USER}
+      SPRING_DATASOURCE_PASSWORD: ${ORDER_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+    depends_on:
+      order-postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
 
 # ==============================
 # Docker Network
@@ -232,3 +282,4 @@ volumes:
   catalog-mongodb-data:
   inventory-postgres-data:
   redis-data:
+  order-postgres-data:

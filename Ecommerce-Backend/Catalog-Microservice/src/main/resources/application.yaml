@@ -5,6 +5,8 @@ server:
 spring:
   application:
     name: Catalog-Microservice
+  profiles:
+    active: local
 
 management:
   endpoints:

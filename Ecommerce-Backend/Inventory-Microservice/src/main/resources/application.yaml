@@ -5,6 +5,8 @@ server:
 spring:
   application:
     name: Inventory-Microservice
+  profiles:
+    active: local
 
 management:
   endpoints:

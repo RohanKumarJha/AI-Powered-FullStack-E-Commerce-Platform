@@ -5,6 +5,8 @@ server:
 spring:
   application:
     name: Cart-Microservice
+  profiles:
+    active: local
 
 management:
   endpoints:

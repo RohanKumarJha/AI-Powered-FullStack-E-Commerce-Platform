@@ -1,0 +1,18 @@
+
+server:
+  port: ${Order_SERVICE_HOST_PORT:8085}
+
+spring:
+  application:
+    name: Order-Microservice
+  profiles:
+    active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

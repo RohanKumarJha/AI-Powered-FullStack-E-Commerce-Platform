@@ -5,6 +5,8 @@ server:
 spring:
   application:
     name: Identity-Microservice
+  profiles:
+    active: local
 
 management:
   endpoints:
