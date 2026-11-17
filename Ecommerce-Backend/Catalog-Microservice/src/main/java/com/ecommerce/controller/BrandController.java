@@ -6,6 +6,7 @@ import com.ecommerce.service.BrandService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,30 +19,46 @@ public class BrandController {
 
     private final BrandService brandService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @PostMapping
-    public BrandResponse createBrand(@Valid @RequestBody BrandRequest request) {
+    public BrandResponse createBrand(
+            @Valid @RequestBody BrandRequest request) {
+
         log.info("Create Brand API called.");
+
         return brandService.createBrand(request);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @PutMapping("/{brandId}")
-    public BrandResponse updateBrand(@PathVariable Long brandId,
-                                     @Valid @RequestBody BrandRequest request) {
-        return brandService.updateBrand(brandId, request);
+    public BrandResponse updateBrand(
+            @PathVariable Long brandId,
+            @Valid @RequestBody BrandRequest request) {
+
+        return brandService.updateBrand(
+                brandId,
+                request
+        );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{brandId}")
-    public void deleteBrand(@PathVariable Long brandId) {
+    public void deleteBrand(
+            @PathVariable Long brandId) {
+
         brandService.deleteBrand(brandId);
     }
 
     @GetMapping("/{brandId}")
-    public BrandResponse getBrandById(@PathVariable Long brandId) {
+    public BrandResponse getBrandById(
+            @PathVariable Long brandId) {
+
         return brandService.getBrandById(brandId);
     }
 
     @GetMapping
     public List<BrandResponse> getAllBrands() {
+
         return brandService.getAllBrands();
     }
 }

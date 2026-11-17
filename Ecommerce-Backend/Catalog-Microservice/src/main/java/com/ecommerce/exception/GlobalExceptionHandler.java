@@ -93,6 +93,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ExceptionResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+        log.warn("Access denied for request [{}]: {}",
+                request.getRequestURI(),
+                ex.getMessage());
+        ExceptionResponse response = ExceptionResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .error(HttpStatus.FORBIDDEN.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleGlobalException(
             Exception ex,
@@ -110,20 +127,4 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    /*
-     * ==========================================================
-     * TODO: Phase 3 - Security Exception Handling
-     * ==========================================================
-     *
-     * @ExceptionHandler(UnauthorizedException.class)
-     * @ExceptionHandler(ForbiddenException.class)
-     * @ExceptionHandler(InvalidTokenException.class)
-     *
-     * Also handle:
-     * - AccessDeniedException
-     * - AuthenticationException
-     * - JwtException
-     *
-     */
 }

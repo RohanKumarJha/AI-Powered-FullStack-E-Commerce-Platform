@@ -6,6 +6,7 @@ import com.ecommerce.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,29 +19,62 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @PostMapping("/products/{productId}")
-    public ReviewResponse addReview(@PathVariable Long productId,
-                                    @Valid @RequestBody ReviewRequest request) {
-        log.info("Add review API called for product ID: {}", productId);
-        return reviewService.addReview(productId, request);
+    public ReviewResponse addReview(
+            @PathVariable Long productId,
+            @Valid @RequestBody ReviewRequest request) {
+
+        log.info(
+                "Add review API called for product ID: {}",
+                productId
+        );
+
+        return reviewService.addReview(
+                productId,
+                request
+        );
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @PutMapping("/{reviewId}")
-    public ReviewResponse updateReview(@PathVariable Long reviewId,
-                                       @Valid @RequestBody ReviewRequest request) {
-        log.info("Update review API called for review ID: {}", reviewId);
-        return reviewService.updateReview(reviewId, request);
+    public ReviewResponse updateReview(
+            @PathVariable Long reviewId,
+            @Valid @RequestBody ReviewRequest request) {
+
+        log.info(
+                "Update review API called for review ID: {}",
+                reviewId
+        );
+
+        return reviewService.updateReview(
+                reviewId,
+                request
+        );
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     @DeleteMapping("/{reviewId}")
-    public void deleteReview(@PathVariable Long reviewId) {
-        log.info("Delete review API called for review ID: {}", reviewId);
+    public void deleteReview(
+            @PathVariable Long reviewId) {
+
+        log.info(
+                "Delete review API called for review ID: {}",
+                reviewId
+        );
+
         reviewService.deleteReview(reviewId);
     }
 
     @GetMapping("/products/{productId}")
-    public List<ReviewResponse> getProductReviews(@PathVariable Long productId) {
-        log.info("Get product reviews API called for product ID: {}", productId);
+    public List<ReviewResponse> getProductReviews(
+            @PathVariable Long productId) {
+
+        log.info(
+                "Get product reviews API called for product ID: {}",
+                productId
+        );
+
         return reviewService.getProductReviews(productId);
     }
 }

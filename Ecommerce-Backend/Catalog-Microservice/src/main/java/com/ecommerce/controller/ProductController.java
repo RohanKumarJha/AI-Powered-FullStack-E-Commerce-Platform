@@ -3,13 +3,14 @@ package com.ecommerce.controller;
 import com.ecommerce.dto.request.ProductFilterRequest;
 import com.ecommerce.dto.request.ProductImageRequest;
 import com.ecommerce.dto.request.ProductRequest;
+import com.ecommerce.dto.response.PageResponse;
 import com.ecommerce.dto.response.ProductImageResponse;
 import com.ecommerce.dto.response.ProductResponse;
-import com.ecommerce.dto.response.PageResponse;
 import com.ecommerce.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,19 +21,26 @@ public class ProductController {
 
     private final ProductService productService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @PostMapping
-    public ProductResponse createProduct(@Valid @RequestBody ProductRequest request) {
+    public ProductResponse createProduct(
+            @Valid @RequestBody ProductRequest request
+    ) {
         log.info("Create Product Api Called !!");
         return productService.createProduct(request);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @PutMapping("/{productId}")
-    public ProductResponse updateProduct(@PathVariable Long productId,
-                                         @Valid @RequestBody ProductRequest request) {
+    public ProductResponse updateProduct(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductRequest request
+    ) {
         log.info("Update Api Product Called!!");
         return productService.updateProduct(productId, request);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{productId}")
     public void deleteProduct(@PathVariable Long productId) {
         log.info("Delete Product Api is called!!");
@@ -41,7 +49,7 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     public ProductResponse getProductById(@PathVariable Long productId) {
-        log.info("Product is called with id : {}",productId);
+        log.info("Product is called with id : {}", productId);
         return productService.getProductById(productId);
     }
 
@@ -51,8 +59,15 @@ public class ProductController {
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDir) {
+
         log.info("Fetch All Product Api");
-        return productService.getAllProducts(page, size, sortBy, sortDir);
+
+        return productService.getAllProducts(
+                page,
+                size,
+                sortBy,
+                sortDir
+        );
     }
 
     @GetMapping("/search")
@@ -62,31 +77,67 @@ public class ProductController {
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDir) {
-        log.info("Search Products API called with keyword: {}", keyword);
-        return productService.searchProducts(keyword, page, size, sortBy, sortDir);
+
+        log.info(
+                "Search Products API called with keyword: {}",
+                keyword
+        );
+
+        return productService.searchProducts(
+                keyword,
+                page,
+                size,
+                sortBy,
+                sortDir
+        );
     }
 
     @PostMapping("/filter")
     public PageResponse<ProductResponse> filterProducts(
-            @RequestBody ProductFilterRequest request,
+            @Valid @RequestBody ProductFilterRequest request,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDir) {
+
         log.info("Filter Product Api called");
-        return productService.filterProducts(request, page, size, sortBy, sortDir);
+
+        return productService.filterProducts(
+                request,
+                page,
+                size,
+                sortBy,
+                sortDir
+        );
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @PostMapping("/{productId}/images")
-    public ProductImageResponse uploadProductImage(@PathVariable Long productId,
-                                                   @Valid @RequestBody ProductImageRequest request) {
-        log.info("Upload image Api request called for productId: {}", productId);
-        return productService.uploadProductImage(productId, request);
+    public ProductImageResponse uploadProductImage(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductImageRequest request) {
+
+        log.info(
+                "Upload image Api request called for productId: {}",
+                productId
+        );
+
+        return productService.uploadProductImage(
+                productId,
+                request
+        );
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     @DeleteMapping("/images/{imageId}")
-    public void deleteProductImage(@PathVariable Long imageId) {
-        log.info("Delete Product Image API called for imageId: {}", imageId);
+    public void deleteProductImage(
+            @PathVariable Long imageId) {
+
+        log.info(
+                "Delete Product Image API called for imageId: {}",
+                imageId
+        );
+
         productService.deleteProductImage(imageId);
     }
 }
