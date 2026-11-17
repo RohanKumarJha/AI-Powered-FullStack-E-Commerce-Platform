@@ -36,7 +36,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 30s
     networks:
@@ -70,6 +70,8 @@ services:
       - ecommerce-network
 
 
+
+
   # ==============================
   # Catalog MongoDB
   # ==============================
@@ -82,13 +84,15 @@ services:
     volumes:
       - catalog-mongodb-data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      test: [ "CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\" || exit 1" ]
       interval: 10s
       timeout: 10s
       retries: 10
-      start_period: 20s
+      start_period: 40s
     networks:
       - ecommerce-network
+
+
 
 
   # ==============================
@@ -134,7 +138,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 20s
     networks:
@@ -182,7 +186,7 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 10s
     networks:
@@ -233,7 +237,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 20s
     networks:
@@ -284,7 +288,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 20s
     networks:
@@ -336,7 +340,7 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 20s
     networks:
@@ -370,6 +374,58 @@ services:
       - ecommerce-network
 
 
+  # ==============================
+  # AI PostgreSQL Database
+  # ==============================
+  ai-postgres:
+    image: postgres:17
+    container_name: ai-postgres
+    restart: unless-stopped
+    ports:
+      - "${AI_POSTGRES_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${AI_DATABASE}
+      POSTGRES_USER: ${AI_USER}
+      POSTGRES_PASSWORD: ${AI_PASSWORD}
+    volumes:
+      - ai-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # AI Microservice
+  # ==============================
+  ai-service:
+    image: ai-microservice:v1
+    container_name: ai-service
+    restart: unless-stopped
+    ports:
+      - "${AI_SERVICE_HOST_PORT}:8088"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: ai-service
+      SERVER_PORT: 8088
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ai-postgres:5432/${AI_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${AI_USER}
+      SPRING_DATASOURCE_PASSWORD: ${AI_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      ai-postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
+
 # ==============================
 # Docker Network
 # ==============================
@@ -389,3 +445,4 @@ volumes:
   order-postgres-data:
   notification-postgres-data:
   payment-postgres-data:
+  ai-postgres-data:
