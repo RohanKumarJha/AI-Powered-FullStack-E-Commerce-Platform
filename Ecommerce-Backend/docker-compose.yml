@@ -84,7 +84,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
       start_period: 20s
     networks:
@@ -308,8 +308,61 @@ services:
       SPRING_DATASOURCE_USERNAME: ${NOTIFICATION_USER}
       SPRING_DATASOURCE_PASSWORD: ${NOTIFICATION_PASSWORD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       notification-postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Payment PostgreSQL Database
+  # ==============================
+  payment-postgres:
+    image: postgres:17
+    container_name: payment-postgres
+    restart: unless-stopped
+    ports:
+      - "${PAYMENT_POSTGRES_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${PAYMENT_DATABASE}
+      POSTGRES_USER: ${PAYMENT_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_PASSWORD}
+    volumes:
+      - payment-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+
+  # ==============================
+  # Payment Service
+  # ==============================
+  payment-service:
+    image: payment-microservice:v1
+    container_name: payment-service
+    restart: unless-stopped
+    ports:
+      - "${PAYMENT_SERVICE_HOST_PORT}:8087"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_NAME: payment-service
+      SERVER_PORT: 8087
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payment-postgres:5432/${PAYMENT_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${PAYMENT_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PAYMENT_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      payment-postgres:
         condition: service_healthy
       eureka-server:
         condition: service_started
@@ -335,3 +388,4 @@ volumes:
   redis-data:
   order-postgres-data:
   notification-postgres-data:
+  payment-postgres-data:

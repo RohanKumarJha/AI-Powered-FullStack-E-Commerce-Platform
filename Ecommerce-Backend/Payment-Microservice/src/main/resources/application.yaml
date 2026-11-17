@@ -1,0 +1,18 @@
+
+server:
+  port: ${PAYMENT_SERVICE_HOST_PORT:8087}
+
+spring:
+  application:
+    name: Payment-Microservice
+  profiles:
+    active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
